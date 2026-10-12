@@ -1,0 +1,6 @@
+{
+  "name": "D C Transmission Services | Oklahoma City Transmission Repair",
+  "description": "Family-owned automatic transmission repair in Oklahoma City for 50+ years. Free road tests, diagnostics, and Tom Fisher's honest guarantee: If we can't fix your car, we won't take your money!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
