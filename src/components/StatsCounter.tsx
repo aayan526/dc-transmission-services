@@ -1,50 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Star, Shield, Award, Wrench, DollarSign } from 'lucide-react';
-import { SHOP_INFO } from '../data/shopData';
+import { Star, Award, Wrench, DollarSign } from 'lucide-react';
 
 export const StatsCounter: React.FC = () => {
   const [hasAnimated, setHasAnimated] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Counter values state
-  const [yearsBusiness, setYearsBusiness] = useState(0);
-  const [yearsExperience, setYearsExperience] = useState(0);
-  const [reviewsCount, setReviewsCount] = useState(0);
-  const [ratingVal, setRatingVal] = useState(0);
+  // Initialize with verified facts so values are immediately accurate
+  const [yearsBusiness, setYearsBusiness] = useState(50);
+  const [yearsExperience, setYearsExperience] = useState(45);
+  const [reviewsCount, setReviewsCount] = useState(139);
+  const [ratingVal, setRatingVal] = useState(4.6);
 
   useEffect(() => {
-    // Check prefers-reduced-motion
+    // Respect prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
       setYearsBusiness(50);
       setYearsExperience(45);
       setReviewsCount(139);
       setRatingVal(4.6);
-      setHasAnimated(true);
       return;
     }
+
+    let animationFrameId: number;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !hasAnimated) {
           setHasAnimated(true);
 
-          // Animate counters
-          const duration = 1200;
-          const start = performance.now();
+          // Reset to 0 for a crisp, quick count-up animation
+          setYearsBusiness(0);
+          setYearsExperience(0);
+          setReviewsCount(0);
+          setRatingVal(0);
+
+          const duration = 1000;
+          let startTime: number | null = null;
 
           const step = (timestamp: number) => {
-            const progress = Math.min((timestamp - start) / duration, 1);
+            if (startTime === null) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
             // Ease out cubic
             const ease = 1 - Math.pow(1 - progress, 3);
 
-            setYearsBusiness(Math.floor(ease * 50));
-            setYearsExperience(Math.floor(ease * 45));
-            setReviewsCount(Math.floor(ease * 139));
-            setRatingVal(parseFloat((ease * 4.6).toFixed(1)));
-
             if (progress < 1) {
-              requestAnimationFrame(step);
+              setYearsBusiness(Math.min(50, Math.round(ease * 50)));
+              setYearsExperience(Math.min(45, Math.round(ease * 45)));
+              setReviewsCount(Math.min(139, Math.round(ease * 139)));
+              setRatingVal(Math.min(4.6, parseFloat((ease * 4.6).toFixed(1))));
+              animationFrameId = requestAnimationFrame(step);
             } else {
               setYearsBusiness(50);
               setYearsExperience(45);
@@ -53,26 +59,27 @@ export const StatsCounter: React.FC = () => {
             }
           };
 
-          requestAnimationFrame(step);
+          animationFrameId = requestAnimationFrame(step);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15 }
     );
 
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
 
-    // Safety fallback: if not triggered within 2 seconds, force target values
+    // Safety fallback: guarantees verified numbers even under browser throttling
     const fallback = setTimeout(() => {
       setYearsBusiness(50);
       setYearsExperience(45);
       setReviewsCount(139);
       setRatingVal(4.6);
-    }, 2000);
+    }, 1200);
 
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(animationFrameId);
       clearTimeout(fallback);
     };
   }, [hasAnimated]);
